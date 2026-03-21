@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONPATH=. python -m pytest tests/ -v 2>&1)",
+      "Bash(PYTHONPATH=. python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(gh pr:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\rymor\\repo\\core"
+    ]
+  }
+}

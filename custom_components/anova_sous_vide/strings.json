@@ -1,0 +1,68 @@
+{
+  "config": {
+    "error": {
+      "invalid_token_format": "Token must start with 'anova-'",
+      "cannot_connect": "Failed to connect to Anova. Check your token and internet connection.",
+      "no_devices": "No devices found. Ensure your cooker is connected to Wi-Fi and paired with your account."
+    },
+    "step": {
+      "user": {
+        "title": "Anova Sous Vide",
+        "description": "Enter your Personal Access Token from the Anova app (More → Developer → Personal Access Tokens).",
+        "data": {
+          "personal_access_token": "Personal Access Token"
+        }
+      },
+      "select_device": {
+        "title": "Select Device",
+        "description": "Multiple devices found. Select the cooker to control.",
+        "data": {
+          "cooker_id": "Device"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cook_time": {
+        "name": "Cook time"
+      },
+      "cook_time_remaining": {
+        "name": "Cook time remaining"
+      },
+      "heater_temperature": {
+        "name": "Heater temperature"
+      },
+      "triac_temperature": {
+        "name": "Triac temperature"
+      },
+      "water_temperature": {
+        "name": "Water temperature"
+      },
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "cook": "Cooking",
+          "idle": "Idle",
+          "low_water": "Low water",
+          "high_temp": "High temperature",
+          "device_failure": "Device failure",
+          "ota": "OTA update",
+          "provisioning": "Provisioning",
+          "startup": "Startup"
+        }
+      },
+      "state": {
+        "name": "State",
+        "state": {
+          "cooking": "Cooking",
+          "preheating": "Preheating",
+          "maintaining": "Maintaining",
+          "no_state": "No state",
+          "set_timer": "Set timer",
+          "timer_expired": "Timer expired"
+        }
+      }
+    }
+  }
+}
