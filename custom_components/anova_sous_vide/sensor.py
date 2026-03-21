@@ -50,6 +50,15 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         value_fn=lambda data: data.water_temperature,
     ),
     AnovaSousVideSensorDescription(
+        key="target_temperature",
+        name="Target temperature",
+        translation_key="target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.target_temperature,
+    ),
+    AnovaSousVideSensorDescription(
         key="cook_time",
         name="Cook time",
         translation_key="cook_time",
@@ -65,6 +74,22 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         device_class=SensorDeviceClass.ENUM,
         options=ANOVA_MODES,
         value_fn=lambda data: data.mode,
+    ),
+    AnovaSousVideSensorDescription(
+        key="cook_time_remaining",
+        name="Cook time remaining",
+        translation_key="cook_time_remaining",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        device_class=SensorDeviceClass.DURATION,
+        value_fn=lambda data: data.cook_time_remaining,
+    ),
+    AnovaSousVideSensorDescription(
+        key="timer_mode",
+        name="Timer mode",
+        translation_key="timer_mode",
+        device_class=SensorDeviceClass.ENUM,
+        options=["idle", "running", "completed"],
+        value_fn=lambda data: data.timer_mode,
     ),
     AnovaSousVideSensorDescription(
         key="active_stage_mode",

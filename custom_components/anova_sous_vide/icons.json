@@ -4,11 +4,20 @@
       "water_temperature": {
         "default": "mdi:thermometer-water"
       },
+      "target_temperature": {
+        "default": "mdi:thermometer-check"
+      },
       "cook_time": {
         "default": "mdi:clock-outline"
       },
       "mode": {
         "default": "mdi:pot-steam"
+      },
+      "cook_time_remaining": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "timer_mode": {
+        "default": "mdi:timer-outline"
       },
       "active_stage_mode": {
         "default": "mdi:progress-clock"
