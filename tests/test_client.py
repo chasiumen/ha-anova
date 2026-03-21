@@ -105,6 +105,7 @@ class TestHandleStateUpdate:
         assert state.firmware_version == "01.02.05"
         assert state.temperature_unit == "C"
         assert state.timer_mode == "completed"
+        assert state.timer_started_at == "2026-03-21T10:40:36Z"
 
     def test_parses_legacy_state(self, client_instance: AnovaSousVideClient) -> None:
         """Test parsing legacy format with job/job-status."""

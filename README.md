@@ -41,15 +41,18 @@ You need a PAT from the Anova app before setting up this integration.
 
 | Entity | Type | Description |
 |--------|------|-------------|
-| `water_heater.anova_sous_vide` | Water Heater | Main control — set target temp, turn on/off, current water temp |
-| `sensor.anova_sous_vide_water_temperature` | Sensor | Current water temperature |
-| `sensor.anova_sous_vide_cook_time` | Sensor | Cook timer duration |
-| `sensor.anova_sous_vide_mode` | Sensor | Device mode (idle, cook, low water, etc.) |
-| `sensor.anova_sous_vide_cook_stage` | Sensor | Cook stage status (running, waiting) |
-| `sensor.anova_sous_vide_cook_started` | Sensor | Timestamp when cook started |
-| `sensor.anova_sous_vide_online` | Sensor | Device online status (diagnostic) |
-| `sensor.anova_sous_vide_firmware_version` | Sensor | Firmware version (diagnostic) |
-| `sensor.anova_sous_vide_temperature_unit` | Sensor | Device temperature unit setting (diagnostic) |
+| `water_heater.anova_*` | Water Heater | Main control — set target temp, turn on/off, current water temp |
+| `sensor.*_water_temperature` | Sensor | Current water temperature |
+| `sensor.*_target_temperature` | Sensor | Target temperature setpoint |
+| `sensor.*_cook_time` | Sensor | Cook timer duration (seconds) |
+| `sensor.*_cook_time_remaining` | Sensor | Cook time remaining — real-time countdown (seconds) |
+| `sensor.*_timer_mode` | Sensor | Timer state (idle, running, completed) |
+| `sensor.*_mode` | Sensor | Device mode (idle, cook, low water, etc.) |
+| `sensor.*_cook_stage` | Sensor | Cook stage status (running, waiting) |
+| `sensor.*_cook_started` | Sensor | Timestamp when cook started |
+| `sensor.*_online` | Sensor | Device online status (diagnostic) |
+| `sensor.*_firmware_version` | Sensor | Firmware version (diagnostic) |
+| `sensor.*_temperature_unit` | Sensor | Device temperature unit setting (diagnostic) |
 
 ## Recipe Example (HA Script)
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -76,14 +77,6 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         value_fn=lambda data: data.mode,
     ),
     AnovaSousVideSensorDescription(
-        key="cook_time_remaining",
-        name="Cook time remaining",
-        translation_key="cook_time_remaining",
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        device_class=SensorDeviceClass.DURATION,
-        value_fn=lambda data: data.cook_time_remaining,
-    ),
-    AnovaSousVideSensorDescription(
         key="timer_mode",
         name="Timer mode",
         translation_key="timer_mode",
@@ -139,10 +132,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up Anova Sous Vide sensors."""
     coordinator = entry.runtime_data.coordinator
-    async_add_entities(
+    entities: list[SensorEntity] = [
         AnovaSousVideSensor(coordinator, description)
         for description in SENSOR_DESCRIPTIONS
-    )
+    ]
+    entities.append(AnovaCookTimeRemainingSensor(coordinator))
+    async_add_entities(entities)
 
 
 class AnovaSousVideSensor(AnovaSousVideDescriptionEntity, SensorEntity):
@@ -156,3 +151,42 @@ class AnovaSousVideSensor(AnovaSousVideDescriptionEntity, SensorEntity):
         if self.coordinator.data is None:
             return None
         return self.entity_description.value_fn(self.coordinator.data)
+
+
+class AnovaCookTimeRemainingSensor(AnovaSousVideDescriptionEntity, SensorEntity):
+    """Sensor that calculates cook time remaining in real-time."""
+
+    entity_description: AnovaSousVideSensorDescription
+
+    def __init__(self, coordinator: AnovaSousVideCoordinator) -> None:
+        """Initialize the cook time remaining sensor."""
+        description = AnovaSousVideSensorDescription(
+            key="cook_time_remaining",
+            name="Cook time remaining",
+            translation_key="cook_time_remaining",
+            native_unit_of_measurement=UnitOfTime.SECONDS,
+            device_class=SensorDeviceClass.DURATION,
+            value_fn=lambda data: None,
+        )
+        super().__init__(coordinator, description)
+
+    @property
+    def native_value(self) -> StateType:
+        """Calculate remaining time on every read."""
+        if self.coordinator.data is None:
+            return None
+        data = self.coordinator.data
+        if data.timer_mode == "completed":
+            return 0
+        if data.timer_mode == "running" and data.cook_time and data.timer_started_at:
+            try:
+                started = datetime.fromisoformat(
+                    data.timer_started_at.replace("Z", "+00:00")
+                )
+                elapsed = (datetime.now(timezone.utc) - started).total_seconds()
+                return max(0, int(data.cook_time - elapsed))
+            except (ValueError, TypeError):
+                return None
+        if data.timer_mode == "idle" and data.cook_time:
+            return data.cook_time
+        return None
