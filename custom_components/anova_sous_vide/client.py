@@ -44,6 +44,11 @@ class AnovaDeviceState:
     cook_time_remaining: int | None = None
     mode: str | None = None
     state: str | None = None
+    active_stage_mode: str | None = None
+    cook_started_timestamp: str | None = None
+    online: bool | None = None
+    firmware_version: str | None = None
+    temperature_unit: str | None = None
 
 
 class AnovaSousVideClient:
@@ -297,8 +302,10 @@ class AnovaSousVideClient:
         nodes = body.get("nodes", {})
         water_temp_sensor = nodes.get("waterTemperatureSensor", {})
         timer_node = nodes.get("timer", {})
-        low_water = nodes.get("lowWater", {})
-        mode = body.get("state", {}).get("mode", "")
+        state_obj = body.get("state", {})
+        mode = state_obj.get("mode", "")
+        system_info = body.get("systemInfo", {})
+        cook = body.get("cook", {})
 
         return AnovaDeviceState(
             is_cooking=mode == "cook",
@@ -314,6 +321,11 @@ class AnovaSousVideClient:
             cook_time_remaining=None,
             mode=mode if mode else None,
             state=None,
+            active_stage_mode=cook.get("activeStageMode"),
+            cook_started_timestamp=cook.get("startedTimestamp"),
+            online=system_info.get("online"),
+            firmware_version=system_info.get("firmwareVersion"),
+            temperature_unit=state_obj.get("temperatureUnit"),
         )
 
     def _parse_a3_state(self, body: dict[str, Any]) -> AnovaDeviceState:

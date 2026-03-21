@@ -24,20 +24,11 @@
   },
   "entity": {
     "sensor": {
-      "cook_time": {
-        "name": "Cook time"
-      },
-      "cook_time_remaining": {
-        "name": "Cook time remaining"
-      },
-      "heater_temperature": {
-        "name": "Heater temperature"
-      },
-      "triac_temperature": {
-        "name": "Triac temperature"
-      },
       "water_temperature": {
         "name": "Water temperature"
+      },
+      "cook_time": {
+        "name": "Cook time"
       },
       "mode": {
         "name": "Mode",
@@ -52,15 +43,27 @@
           "startup": "Startup"
         }
       },
-      "state": {
-        "name": "State",
+      "active_stage_mode": {
+        "name": "Cook stage",
         "state": {
-          "cooking": "Cooking",
-          "preheating": "Preheating",
-          "maintaining": "Maintaining",
-          "no_state": "No state",
-          "set_timer": "Set timer",
-          "timer_expired": "Timer expired"
+          "running": "Running",
+          "waiting": "Waiting"
+        }
+      },
+      "cook_started": {
+        "name": "Cook started"
+      },
+      "online": {
+        "name": "Online"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "temperature_unit": {
+        "name": "Temperature unit",
+        "state": {
+          "C": "Celsius",
+          "F": "Fahrenheit"
         }
       }
     }

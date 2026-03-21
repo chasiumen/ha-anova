@@ -70,8 +70,12 @@ class TestHandleStateUpdate:
                 "cookerId": "cooker-123",
                 "type": "a7",
                 "state": {
-                    "systemInfo": {"firmwareVersion": "2.0.0"},
-                    "state": {"mode": "cook"},
+                    "systemInfo": {"firmwareVersion": "01.02.05", "online": True},
+                    "state": {"mode": "cook", "temperatureUnit": "C"},
+                    "cook": {
+                        "activeStageMode": "running",
+                        "startedTimestamp": "2026-03-21T10:40:36Z",
+                    },
                     "nodes": {
                         "waterTemperatureSensor": {
                             "current": {"celsius": 52.3},
@@ -90,6 +94,11 @@ class TestHandleStateUpdate:
         assert state.water_temperature == 52.3
         assert state.cook_time == 3600
         assert state.mode == "cook"
+        assert state.active_stage_mode == "running"
+        assert state.cook_started_timestamp == "2026-03-21T10:40:36Z"
+        assert state.online is True
+        assert state.firmware_version == "01.02.05"
+        assert state.temperature_unit == "C"
 
     def test_parses_legacy_state(self, client_instance: AnovaSousVideClient) -> None:
         """Test parsing legacy format with job/job-status."""

@@ -4,23 +4,26 @@
       "water_temperature": {
         "default": "mdi:thermometer-water"
       },
-      "heater_temperature": {
-        "default": "mdi:thermometer-high"
-      },
-      "triac_temperature": {
-        "default": "mdi:thermometer"
-      },
       "cook_time": {
         "default": "mdi:clock-outline"
-      },
-      "cook_time_remaining": {
-        "default": "mdi:clock-alert-outline"
       },
       "mode": {
         "default": "mdi:pot-steam"
       },
-      "state": {
-        "default": "mdi:pot-steam-outline"
+      "active_stage_mode": {
+        "default": "mdi:progress-clock"
+      },
+      "cook_started": {
+        "default": "mdi:clock-start"
+      },
+      "online": {
+        "default": "mdi:wifi"
+      },
+      "firmware_version": {
+        "default": "mdi:chip"
+      },
+      "temperature_unit": {
+        "default": "mdi:thermometer-lines"
       }
     }
   }

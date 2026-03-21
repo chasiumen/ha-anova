@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature, UnitOfTime
+from homeassistant.const import EntityCategory, UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -19,15 +19,6 @@ from homeassistant.helpers.typing import StateType
 from .client import AnovaDeviceState
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator
 from .entity import AnovaSousVideDescriptionEntity
-
-ANOVA_STATES = [
-    "cooking",
-    "preheating",
-    "maintaining",
-    "no_state",
-    "set_timer",
-    "timer_expired",
-]
 
 ANOVA_MODES = [
     "cook",
@@ -51,6 +42,7 @@ class AnovaSousVideSensorDescription(SensorEntityDescription):
 SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
     AnovaSousVideSensorDescription(
         key="water_temperature",
+        name="Water temperature",
         translation_key="water_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -58,23 +50,8 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         value_fn=lambda data: data.water_temperature,
     ),
     AnovaSousVideSensorDescription(
-        key="heater_temperature",
-        translation_key="heater_temperature",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.heater_temperature,
-    ),
-    AnovaSousVideSensorDescription(
-        key="triac_temperature",
-        translation_key="triac_temperature",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.triac_temperature,
-    ),
-    AnovaSousVideSensorDescription(
         key="cook_time",
+        name="Cook time",
         translation_key="cook_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
         device_class=SensorDeviceClass.DURATION,
@@ -82,25 +59,50 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         value_fn=lambda data: data.cook_time,
     ),
     AnovaSousVideSensorDescription(
-        key="cook_time_remaining",
-        translation_key="cook_time_remaining",
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        device_class=SensorDeviceClass.DURATION,
-        value_fn=lambda data: data.cook_time_remaining,
-    ),
-    AnovaSousVideSensorDescription(
         key="mode",
+        name="Mode",
         translation_key="mode",
         device_class=SensorDeviceClass.ENUM,
         options=ANOVA_MODES,
         value_fn=lambda data: data.mode,
     ),
     AnovaSousVideSensorDescription(
-        key="state",
-        translation_key="state",
+        key="active_stage_mode",
+        name="Cook stage",
+        translation_key="active_stage_mode",
         device_class=SensorDeviceClass.ENUM,
-        options=ANOVA_STATES,
-        value_fn=lambda data: data.state,
+        options=["running", "waiting"],
+        value_fn=lambda data: data.active_stage_mode,
+    ),
+    AnovaSousVideSensorDescription(
+        key="cook_started",
+        name="Cook started",
+        translation_key="cook_started",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda data: data.cook_started_timestamp,
+    ),
+    AnovaSousVideSensorDescription(
+        key="online",
+        name="Online",
+        translation_key="online",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.online,
+    ),
+    AnovaSousVideSensorDescription(
+        key="firmware_version",
+        name="Firmware version",
+        translation_key="firmware_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: data.firmware_version,
+    ),
+    AnovaSousVideSensorDescription(
+        key="temperature_unit",
+        name="Temperature unit",
+        translation_key="temperature_unit",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENUM,
+        options=["C", "F"],
+        value_fn=lambda data: data.temperature_unit,
     ),
 ]
 
