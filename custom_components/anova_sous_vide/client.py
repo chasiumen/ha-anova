@@ -225,6 +225,8 @@ class AnovaSousVideClient:
     def _handle_message(self, data: dict[str, Any]) -> None:
         """Route an incoming message to the appropriate handler."""
         command = data.get("command", "")
+        _LOGGER.debug("Received message: command=%s payload_keys=%s", command, list(data.get("payload", {}).keys()) if isinstance(data.get("payload"), dict) else "non-dict")
+        _LOGGER.debug("Full message: %s", json.dumps(data)[:2000])
 
         if command == "EVENT_APC_WIFI_LIST":
             self._handle_device_list(data)
@@ -232,6 +234,9 @@ class AnovaSousVideClient:
             self._handle_state_update(data)
         elif command.startswith("RESPONSE"):
             _LOGGER.debug("Received response: %s", data)
+        else:
+            # Log unhandled commands so we can discover state event names
+            _LOGGER.info("Unhandled command: %s", command)
 
     def _handle_device_list(self, data: dict[str, Any]) -> None:
         """Process EVENT_APC_WIFI_LIST."""
@@ -250,35 +255,34 @@ class AnovaSousVideClient:
             self._discovery_event.set()
 
     def _handle_state_update(self, data: dict[str, Any]) -> None:
-        """Process EVENT_APC_STATE and update device state."""
+        """Process EVENT_APC_STATE and update device state.
+
+        Supports multiple device types:
+        - a6/a7: nested structure with nodes.waterTemperatureSensor, state.mode, etc.
+        - a3: flat structure with camelCase keys (currentTemperature, targetTemperature, etc.)
+        - legacy: flat structure with hyphenated keys (water-temperature, job, job-status, etc.)
+        """
         payload = data.get("payload", {})
         cooker_id = payload.get("cookerId", "")
         if not cooker_id:
             return
 
-        body = payload.get("state", payload)
+        device_type = payload.get("type", "")
+        body = payload.get("state", {})
 
-        state = AnovaDeviceState(
-            is_cooking=body.get("is-cooking", body.get("is_cooking", False)),
-            target_temperature=body.get(
-                "target-temperature", body.get("target_temperature")
-            ),
-            water_temperature=body.get(
-                "water-temperature", body.get("water_temperature")
-            ),
-            heater_temperature=body.get(
-                "heater-temperature", body.get("heater_temperature")
-            ),
-            triac_temperature=body.get(
-                "triac-temperature", body.get("triac_temperature")
-            ),
-            cook_time=body.get("cook-time", body.get("cook_time")),
-            cook_time_remaining=body.get(
-                "cook-time-remaining", body.get("cook_time_remaining")
-            ),
-            mode=body.get("mode"),
-            state=body.get("state"),
-        )
+        if device_type in ("a6", "a7"):
+            state = self._parse_a6_a7_state(body)
+        elif device_type == "a3":
+            state = self._parse_a3_state(body)
+        elif "job" in body:
+            state = self._parse_legacy_state(body)
+        else:
+            _LOGGER.warning(
+                "Unknown state format for device type %s: %s",
+                device_type,
+                list(body.keys()),
+            )
+            return
 
         self._state[cooker_id] = state
 
@@ -287,3 +291,81 @@ class AnovaSousVideClient:
                 callback(cooker_id, state)
             except Exception:
                 _LOGGER.exception("Error in state callback")
+
+    def _parse_a6_a7_state(self, body: dict[str, Any]) -> AnovaDeviceState:
+        """Parse a6/a7 state format (Precision Cooker 3.0)."""
+        nodes = body.get("nodes", {})
+        water_temp_sensor = nodes.get("waterTemperatureSensor", {})
+        timer_node = nodes.get("timer", {})
+        low_water = nodes.get("lowWater", {})
+        mode = body.get("state", {}).get("mode", "")
+
+        return AnovaDeviceState(
+            is_cooking=mode == "cook",
+            target_temperature=_safe_float(
+                water_temp_sensor.get("setpoint", {}).get("celsius")
+            ),
+            water_temperature=_safe_float(
+                water_temp_sensor.get("current", {}).get("celsius")
+            ),
+            heater_temperature=None,
+            triac_temperature=None,
+            cook_time=_safe_int(timer_node.get("initial")),
+            cook_time_remaining=None,
+            mode=mode if mode else None,
+            state=None,
+        )
+
+    def _parse_a3_state(self, body: dict[str, Any]) -> AnovaDeviceState:
+        """Parse a3 state format."""
+        is_cooking = body.get("isCooking", False)
+        return AnovaDeviceState(
+            is_cooking=bool(is_cooking),
+            target_temperature=_safe_float(body.get("targetTemperature")),
+            water_temperature=_safe_float(body.get("currentTemperature")),
+            heater_temperature=None,
+            triac_temperature=None,
+            cook_time=None,
+            cook_time_remaining=_safe_int(body.get("timerInSeconds")),
+            mode="cook" if is_cooking else "idle",
+            state=None,
+        )
+
+    def _parse_legacy_state(self, body: dict[str, Any]) -> AnovaDeviceState:
+        """Parse legacy state format with job/job-status/temperature-info."""
+        job = body.get("job", {})
+        job_status = body.get("job-status", {})
+        temp_info = body.get("temperature-info", {})
+        mode = job.get("mode", "")
+
+        return AnovaDeviceState(
+            is_cooking=mode == "COOK",
+            target_temperature=_safe_float(job.get("target-temperature")),
+            water_temperature=_safe_float(temp_info.get("water-temperature")),
+            heater_temperature=_safe_float(temp_info.get("heater-temperature")),
+            triac_temperature=_safe_float(temp_info.get("triac-temperature")),
+            cook_time=_safe_int(job.get("cook-time-seconds")),
+            cook_time_remaining=_safe_int(job_status.get("cook-time-remaining")),
+            mode=mode.lower() if mode else None,
+            state=job_status.get("state", "").lower() or None,
+        )
+
+
+def _safe_float(value: Any) -> float | None:
+    """Safely convert a value to float."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _safe_int(value: Any) -> int | None:
+    """Safely convert a value to int."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None

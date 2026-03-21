@@ -62,21 +62,24 @@ class TestHandleDeviceList:
 class TestHandleStateUpdate:
     """Tests for _handle_state_update."""
 
-    def test_parses_state(self, client_instance: AnovaSousVideClient) -> None:
+    def test_parses_a7_state(self, client_instance: AnovaSousVideClient) -> None:
+        """Test parsing a6/a7 format (Precision Cooker 3.0)."""
         data = {
             "command": "EVENT_APC_STATE",
             "payload": {
                 "cookerId": "cooker-123",
+                "type": "a7",
                 "state": {
-                    "is-cooking": True,
-                    "target-temperature": 55.0,
-                    "water-temperature": 52.3,
-                    "heater-temperature": 56.1,
-                    "triac-temperature": 45.2,
-                    "cook-time": 3600,
-                    "cook-time-remaining": 1800,
-                    "mode": "cook",
-                    "state": "cooking",
+                    "systemInfo": {"firmwareVersion": "2.0.0"},
+                    "state": {"mode": "cook"},
+                    "nodes": {
+                        "waterTemperatureSensor": {
+                            "current": {"celsius": 52.3},
+                            "setpoint": {"celsius": 55.0},
+                        },
+                        "timer": {"initial": 3600},
+                        "lowWater": {"warning": False, "empty": False},
+                    },
                 },
             },
         }
@@ -85,8 +88,47 @@ class TestHandleStateUpdate:
         assert state.is_cooking is True
         assert state.target_temperature == 55.0
         assert state.water_temperature == 52.3
+        assert state.cook_time == 3600
         assert state.mode == "cook"
-        assert state.state == "cooking"
+
+    def test_parses_legacy_state(self, client_instance: AnovaSousVideClient) -> None:
+        """Test parsing legacy format with job/job-status."""
+        data = {
+            "command": "EVENT_APC_STATE",
+            "payload": {
+                "cookerId": "cooker-123",
+                "type": "unknown",
+                "state": {
+                    "job": {
+                        "id": "abc",
+                        "cook-time-seconds": 3600,
+                        "target-temperature": 55.0,
+                        "temperature-unit": "C",
+                        "mode": "COOK",
+                        "ota-url": "",
+                    },
+                    "job-status": {
+                        "cook-time-remaining": 1800,
+                        "state": "COOKING",
+                    },
+                    "temperature-info": {
+                        "water-temperature": 52.3,
+                        "heater-temperature": 56.1,
+                        "triac-temperature": 45.2,
+                    },
+                    "pin-info": {},
+                },
+            },
+        }
+        client_instance._handle_state_update(data)
+        state = client_instance.get_state("cooker-123")
+        assert state.is_cooking is True
+        assert state.target_temperature == 55.0
+        assert state.water_temperature == 52.3
+        assert state.heater_temperature == 56.1
+        assert state.triac_temperature == 45.2
+        assert state.cook_time == 3600
+        assert state.cook_time_remaining == 1800
 
     def test_calls_state_callbacks(self, client_instance: AnovaSousVideClient) -> None:
         callback = MagicMock()
@@ -95,7 +137,19 @@ class TestHandleStateUpdate:
             "command": "EVENT_APC_STATE",
             "payload": {
                 "cookerId": "cooker-123",
-                "state": {"is-cooking": False},
+                "type": "a7",
+                "state": {
+                    "state": {"mode": "idle"},
+                    "nodes": {
+                        "waterTemperatureSensor": {
+                            "current": {"celsius": 20.0},
+                            "setpoint": {"celsius": 55.0},
+                        },
+                        "timer": {"initial": 0},
+                        "lowWater": {"warning": False, "empty": False},
+                    },
+                    "systemInfo": {"firmwareVersion": "2.0.0"},
+                },
             },
         }
         client_instance._handle_state_update(data)
