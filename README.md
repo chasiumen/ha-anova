@@ -41,14 +41,15 @@ You need a PAT from the Anova app before setting up this integration.
 
 | Entity | Type | Description |
 |--------|------|-------------|
-| `water_heater.anova_sous_vide` | Water Heater | Main control — set temp, turn on/off |
+| `water_heater.anova_sous_vide` | Water Heater | Main control — set target temp, turn on/off, current water temp |
 | `sensor.anova_sous_vide_water_temperature` | Sensor | Current water temperature |
-| `sensor.anova_sous_vide_heater_temperature` | Sensor | Heater element temperature |
-| `sensor.anova_sous_vide_triac_temperature` | Sensor | Triac temperature |
-| `sensor.anova_sous_vide_cook_time` | Sensor | Elapsed cook time |
-| `sensor.anova_sous_vide_cook_time_remaining` | Sensor | Remaining cook time |
-| `sensor.anova_sous_vide_mode` | Sensor | Device mode (idle, cook, etc.) |
-| `sensor.anova_sous_vide_state` | Sensor | Cook state (preheating, cooking, etc.) |
+| `sensor.anova_sous_vide_cook_time` | Sensor | Cook timer duration |
+| `sensor.anova_sous_vide_mode` | Sensor | Device mode (idle, cook, low water, etc.) |
+| `sensor.anova_sous_vide_cook_stage` | Sensor | Cook stage status (running, waiting) |
+| `sensor.anova_sous_vide_cook_started` | Sensor | Timestamp when cook started |
+| `sensor.anova_sous_vide_online` | Sensor | Device online status (diagnostic) |
+| `sensor.anova_sous_vide_firmware_version` | Sensor | Firmware version (diagnostic) |
+| `sensor.anova_sous_vide_temperature_unit` | Sensor | Device temperature unit setting (diagnostic) |
 
 ## Recipe Example (HA Script)
 

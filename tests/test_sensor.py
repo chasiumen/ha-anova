@@ -25,6 +25,11 @@ def state() -> AnovaDeviceState:
         cook_time_remaining=1800,
         mode="cook",
         state="cooking",
+        active_stage_mode="running",
+        cook_started_timestamp="2026-03-21T10:40:36Z",
+        online=True,
+        firmware_version="01.02.05",
+        temperature_unit="C",
     )
 
 
@@ -52,6 +57,21 @@ class TestDeviceStateValues:
     def test_state_field(self, state: AnovaDeviceState) -> None:
         assert state.state == "cooking"
 
+    def test_active_stage_mode(self, state: AnovaDeviceState) -> None:
+        assert state.active_stage_mode == "running"
+
+    def test_cook_started_timestamp(self, state: AnovaDeviceState) -> None:
+        assert state.cook_started_timestamp == "2026-03-21T10:40:36Z"
+
+    def test_online(self, state: AnovaDeviceState) -> None:
+        assert state.online is True
+
+    def test_firmware_version(self, state: AnovaDeviceState) -> None:
+        assert state.firmware_version == "01.02.05"
+
+    def test_temperature_unit(self, state: AnovaDeviceState) -> None:
+        assert state.temperature_unit == "C"
+
     def test_all_none_defaults(self) -> None:
         state = AnovaDeviceState()
         assert state.is_cooking is False
@@ -63,3 +83,8 @@ class TestDeviceStateValues:
         assert state.cook_time_remaining is None
         assert state.mode is None
         assert state.state is None
+        assert state.active_stage_mode is None
+        assert state.cook_started_timestamp is None
+        assert state.online is None
+        assert state.firmware_version is None
+        assert state.temperature_unit is None
