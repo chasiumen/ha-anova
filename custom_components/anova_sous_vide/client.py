@@ -51,6 +51,7 @@ class AnovaDeviceState:
     firmware_version: str | None = None
     temperature_unit: str | None = None
     timer_mode: str | None = None
+    timer_started_at: str | None = None
 
 
 class AnovaSousVideClient:
@@ -335,6 +336,7 @@ class AnovaSousVideClient:
             firmware_version=system_info.get("firmwareVersion"),
             temperature_unit=state_obj.get("temperatureUnit"),
             timer_mode=timer_mode if timer_mode else None,
+            timer_started_at=timer_node.get("startedAtTimestamp"),
         )
 
     def _parse_a3_state(self, body: dict[str, Any]) -> AnovaDeviceState:

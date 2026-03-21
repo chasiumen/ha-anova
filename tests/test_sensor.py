@@ -31,6 +31,7 @@ def state() -> AnovaDeviceState:
         firmware_version="01.02.05",
         temperature_unit="C",
         timer_mode="running",
+        timer_started_at="2026-03-21T10:40:36Z",
     )
 
 
@@ -76,6 +77,9 @@ class TestDeviceStateValues:
     def test_timer_mode(self, state: AnovaDeviceState) -> None:
         assert state.timer_mode == "running"
 
+    def test_timer_started_at(self, state: AnovaDeviceState) -> None:
+        assert state.timer_started_at == "2026-03-21T10:40:36Z"
+
     def test_all_none_defaults(self) -> None:
         state = AnovaDeviceState()
         assert state.is_cooking is False
@@ -93,3 +97,4 @@ class TestDeviceStateValues:
         assert state.firmware_version is None
         assert state.temperature_unit is None
         assert state.timer_mode is None
+        assert state.timer_started_at is None
