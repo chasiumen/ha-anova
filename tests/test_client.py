@@ -81,7 +81,11 @@ class TestHandleStateUpdate:
                             "current": {"celsius": 52.3},
                             "setpoint": {"celsius": 55.0},
                         },
-                        "timer": {"initial": 3600},
+                        "timer": {
+                            "initial": 3600,
+                            "mode": "completed",
+                            "startedAtTimestamp": "2026-03-21T10:40:36Z",
+                        },
                         "lowWater": {"warning": False, "empty": False},
                     },
                 },
@@ -93,12 +97,14 @@ class TestHandleStateUpdate:
         assert state.target_temperature == 55.0
         assert state.water_temperature == 52.3
         assert state.cook_time == 3600
+        assert state.cook_time_remaining == 0  # completed timer
         assert state.mode == "cook"
         assert state.active_stage_mode == "running"
         assert state.cook_started_timestamp == "2026-03-21T10:40:36Z"
         assert state.online is True
         assert state.firmware_version == "01.02.05"
         assert state.temperature_unit == "C"
+        assert state.timer_mode == "completed"
 
     def test_parses_legacy_state(self, client_instance: AnovaSousVideClient) -> None:
         """Test parsing legacy format with job/job-status."""

@@ -7,6 +7,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 import websockets
@@ -49,6 +50,7 @@ class AnovaDeviceState:
     online: bool | None = None
     firmware_version: str | None = None
     temperature_unit: str | None = None
+    timer_mode: str | None = None
 
 
 class AnovaSousVideClient:
@@ -307,6 +309,12 @@ class AnovaSousVideClient:
         system_info = body.get("systemInfo", {})
         cook = body.get("cook", {})
 
+        timer_mode = timer_node.get("mode", "idle")
+        timer_initial = _safe_int(timer_node.get("initial"))
+        cook_time_remaining = _calc_timer_remaining(
+            timer_mode, timer_initial, timer_node.get("startedAtTimestamp")
+        )
+
         return AnovaDeviceState(
             is_cooking=mode == "cook",
             target_temperature=_safe_float(
@@ -317,8 +325,8 @@ class AnovaSousVideClient:
             ),
             heater_temperature=None,
             triac_temperature=None,
-            cook_time=_safe_int(timer_node.get("initial")),
-            cook_time_remaining=None,
+            cook_time=timer_initial,
+            cook_time_remaining=cook_time_remaining,
             mode=mode if mode else None,
             state=None,
             active_stage_mode=cook.get("activeStageMode"),
@@ -326,6 +334,7 @@ class AnovaSousVideClient:
             online=system_info.get("online"),
             firmware_version=system_info.get("firmwareVersion"),
             temperature_unit=state_obj.get("temperatureUnit"),
+            timer_mode=timer_mode if timer_mode else None,
         )
 
     def _parse_a3_state(self, body: dict[str, Any]) -> AnovaDeviceState:
@@ -361,6 +370,24 @@ class AnovaSousVideClient:
             mode=mode.lower() if mode else None,
             state=job_status.get("state", "").lower() or None,
         )
+
+
+def _calc_timer_remaining(
+    timer_mode: str, initial: int | None, started_at: str | None
+) -> int | None:
+    """Calculate remaining timer seconds from mode, initial duration, and start time."""
+    if timer_mode == "completed":
+        return 0
+    if timer_mode == "running" and initial and started_at:
+        try:
+            started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+            elapsed = (datetime.now(timezone.utc) - started).total_seconds()
+            return max(0, int(initial - elapsed))
+        except (ValueError, TypeError):
+            return None
+    if timer_mode == "idle" and initial:
+        return initial
+    return None
 
 
 def _safe_float(value: Any) -> float | None:
