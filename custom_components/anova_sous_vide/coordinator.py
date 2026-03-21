@@ -53,7 +53,7 @@ class AnovaSousVideCoordinator(DataUpdateCoordinator[AnovaDeviceState]):
 
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, cooker_id)},
-            name="Anova Precision Cooker",
+            name="Anova Precision Cooker 3.0",
             manufacturer="Anova",
             model="Precision Cooker 3.0",
         )
