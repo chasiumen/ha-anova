@@ -11,14 +11,31 @@ Custom Home Assistant integration for **Anova Precision Cooker 3.0** with full c
 - **Push-based updates** via WebSocket — no polling
 - **Multi-stage recipes** via HA scripts/automations (set temp → wait for target → cook for duration → change temp → repeat → notify)
 
+## Prerequisites
+
+### Getting your Personal Access Token (PAT)
+
+You need a PAT from the Anova app before setting up this integration.
+
+1. Download the **Anova app** on your phone (iOS/Android)
+   - Use the **Anova Oven** app (not the older Anova Culinary app) — it works for all devices including sous vide cookers
+2. Sign in with the same account your cooker is paired to
+3. Navigate to **More → Developer → Personal Access Tokens**
+4. Tap **Create Token** — it will generate a token starting with `anova-`
+5. Copy the token and save it somewhere safe — you'll need it during setup
+
+> **Note:** The token starts with `anova-`. If your token doesn't start with this prefix, you may be in the wrong section of the app.
+
 ## Installation (HACS)
 
 1. In Home Assistant, go to **HACS → Integrations → ⋮ (top right) → Custom repositories**
-2. Add this repo URL, category **Integration**
-3. Search for **Anova Sous Vide** and install
-4. Restart Home Assistant
-5. Go to **Settings → Devices & Services → Add Integration → Anova Sous Vide**
-6. Enter your Personal Access Token (from the Anova app: **More → Developer → Personal Access Tokens**)
+2. Add this repo URL: `https://github.com/chasiumen/ha-anova`, category **Integration**
+3. Search for **Anova Sous Vide** and click **Install**
+4. **Restart Home Assistant**
+5. Go to **Settings → Devices & Services → + Add Integration**
+6. Search for **Anova Sous Vide**
+7. Paste your Personal Access Token (the `anova-...` token from the step above)
+8. The integration will connect to Anova's WebSocket, discover your cooker, and create all entities automatically
 
 ## Entities
 
