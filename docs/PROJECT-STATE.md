@@ -1,6 +1,6 @@
 # ha-anova — project state & decisions
 
-*Last updated: 2026-03-21 (API testing notes added)*
+*Last updated: 2026-03-21 (v0.1.0 scaffold complete)*
 
 Use this file to resume work after a break. It captures goals, constraints, and agreed approaches (not implementation status).
 
@@ -101,13 +101,42 @@ Implementation should send the same JSON shapes over the authenticated WebSocket
 
 ---
 
+## Implementation status
+
+| Step | Status |
+|------|--------|
+| Confirm device protocol (Wi‑Fi / WebSocket) | **Done** — PAT + WebSocket + `a7` Precision Cooker 3.0 |
+| Scaffold `custom_components/anova_sous_vide/` | **Done** — manifest, `__init__`, config flow, all platforms |
+| WebSocket client (`client.py`) | **Done** — connect, discover, start/stop cook, state push, reconnection |
+| Config flow | **Done** — PAT input → device discovery → auto-select or multi-device picker |
+| `water_heater` entity (primary control) | **Done** — set temp, turn on/off, operation modes (25–95 °C) |
+| Sensor entities (7 sensors) | **Done** — water/heater/triac temps, cook time, remaining, mode, state |
+| `hacs.json` | **Done** — ready for Custom repository install |
+| Unit tests (27 passing) | **Done** — client, config flow, water heater, sensor tests |
+
+### Domain
+
+- **`anova_sous_vide`** — avoids conflict with the core `anova` integration.
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `custom_components/anova_sous_vide/client.py` | Standalone WebSocket client (no HA deps) |
+| `custom_components/anova_sous_vide/water_heater.py` | Primary control entity |
+| `custom_components/anova_sous_vide/sensor.py` | Read-only sensors |
+| `custom_components/anova_sous_vide/config_flow.py` | PAT + device discovery UI |
+| `hacs.json` | HACS custom repo metadata |
+
 ## Next steps when resuming
 
-1. ~~Confirm device protocol (Wi‑Fi / WebSocket)~~ — **done:** PAT + WebSocket + `a7` Precision Cooker 3.0.
-2. Scaffold `custom_components/<domain>/` (`manifest.json`, `__init__.py`, platforms as needed) and a **`tests/`** layout with **pytest**.
-3. Implement auth + outbound commands ( **`anova-wifi`** and/or same WebSocket JSON as above); add **unit tests** for each substantial change.
-4. Add **`hacs.json`** and test **Custom repository** install from private GitHub/GitLab.
-5. Add entities/services: target temp, start/stop, optional timer mode (`0` vs seconds); then automations for “recipes.”
+1. ~~Confirm device protocol~~ — **done.**
+2. ~~Scaffold integration~~ — **done.**
+3. ~~Implement auth + commands + tests~~ — **done.**
+4. ~~Add `hacs.json`~~ — **done.**
+5. **Test HACS Custom repository install** from private GitHub repo.
+6. **Live test** on HA: config flow → entity creation → start/stop cook → verify state sensors.
+7. **Recipe automations:** build HA scripts for multi-stage cooks (e.g., lemon herb chicken: 63 °C → 66 °C with notifications).
 
 ---
 
