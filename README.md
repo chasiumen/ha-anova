@@ -82,6 +82,28 @@ Stop cooking and turn off the cooker.
 action: anova_sous_vide.stop_cook
 ```
 
+### `anova_sous_vide.set_timer`
+
+Set the cook timer while keeping the cooker running at the current target temperature.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `timer` | Yes | Cook timer in seconds |
+
+```yaml
+action: anova_sous_vide.set_timer
+data:
+  timer: 7200
+```
+
+### `anova_sous_vide.reset_timer`
+
+Reset the cook timer to zero while keeping the cooker running at the current target temperature.
+
+```yaml
+action: anova_sous_vide.reset_timer
+```
+
 ## Recipe Examples
 
 ### Simple: Steak (55C for 2 hours)

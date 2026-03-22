@@ -19,6 +19,8 @@ PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR, Platform.NUMBER]
 
 SERVICE_START_COOK = "start_cook"
 SERVICE_STOP_COOK = "stop_cook"
+SERVICE_RESET_TIMER = "reset_timer"
+SERVICE_SET_TIMER = "set_timer"
 ATTR_TEMPERATURE = "temperature"
 ATTR_TIMER = "timer"
 
@@ -28,6 +30,14 @@ SERVICE_START_COOK_SCHEMA = vol.Schema(
             vol.Coerce(float), vol.Range(min=MIN_TEMP_C, max=MAX_TEMP_C)
         ),
         vol.Optional(ATTR_TIMER, default=0): vol.All(
+            vol.Coerce(int), vol.Range(min=0)
+        ),
+    }
+)
+
+SERVICE_SET_TIMER_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_TIMER): vol.All(
             vol.Coerce(int), vol.Range(min=0)
         ),
     }
@@ -82,6 +92,22 @@ async def async_setup_entry(
             coordinator.device_type,
         )
 
+    async def handle_set_timer(call: ServiceCall) -> None:
+        """Handle the set_timer service call."""
+        timer = call.data[ATTR_TIMER]
+        await coordinator.client.set_timer(
+            coordinator.cooker_id,
+            coordinator.device_type,
+            timer,
+        )
+
+    async def handle_reset_timer(call: ServiceCall) -> None:
+        """Handle the reset_timer service call."""
+        await coordinator.client.reset_timer(
+            coordinator.cooker_id,
+            coordinator.device_type,
+        )
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_START_COOK,
@@ -92,6 +118,17 @@ async def async_setup_entry(
         DOMAIN,
         SERVICE_STOP_COOK,
         handle_stop_cook,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_TIMER,
+        handle_set_timer,
+        schema=SERVICE_SET_TIMER_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_RESET_TIMER,
+        handle_reset_timer,
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -104,6 +141,8 @@ async def async_unload_entry(
     """Unload a config entry."""
     hass.services.async_remove(DOMAIN, SERVICE_START_COOK)
     hass.services.async_remove(DOMAIN, SERVICE_STOP_COOK)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_TIMER)
+    hass.services.async_remove(DOMAIN, SERVICE_RESET_TIMER)
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.client.disconnect()
     return unload_ok

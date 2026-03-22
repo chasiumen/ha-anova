@@ -165,6 +165,16 @@ class AnovaSousVideClient:
         }
         await self._send(command)
 
+    async def set_timer(self, cooker_id: str, device_type: str, timer_seconds: int) -> None:
+        """Set the cook timer while keeping the current target temperature."""
+        state = self._state.get(cooker_id)
+        target_temp = state.target_temperature if state and state.target_temperature else 55.0
+        await self.start_cook(cooker_id, device_type, target_temp, timer_seconds=timer_seconds)
+
+    async def reset_timer(self, cooker_id: str, device_type: str) -> None:
+        """Reset the cook timer by re-sending start with timer=0 at current target temp."""
+        await self.set_timer(cooker_id, device_type, 0)
+
     async def stop_cook(self, cooker_id: str, device_type: str) -> None:
         """Send CMD_APC_STOP to stop cooking."""
         command = {

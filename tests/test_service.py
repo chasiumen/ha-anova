@@ -1,4 +1,4 @@
-"""Tests for the anova_sous_vide services (start_cook, stop_cook)."""
+"""Tests for the anova_sous_vide services (start_cook, stop_cook, set_timer, reset_timer)."""
 
 from __future__ import annotations
 
@@ -87,3 +87,69 @@ class TestStopCook:
         client = AnovaSousVideClient()
         with pytest.raises(ConnectionError):
             await client.stop_cook("cooker-123", "a7")
+
+
+class TestSetTimer:
+    """Tests for set_timer command."""
+
+    @pytest.mark.asyncio
+    async def test_set_timer_sends_start_cook_with_timer(self) -> None:
+        client = AnovaSousVideClient()
+        mock_ws = AsyncMock()
+        client._ws = mock_ws
+        client._connected = True
+        # Simulate existing state with a target temperature
+        from client import AnovaDeviceState
+        client._state["cooker-123"] = AnovaDeviceState(
+            is_cooking=True, target_temperature=65.0
+        )
+
+        await client.set_timer("cooker-123", "a7", 7200)
+
+        mock_ws.send.assert_called_once()
+        sent = json.loads(mock_ws.send.call_args[0][0])
+        assert sent["command"] == "CMD_APC_START"
+        assert sent["payload"]["targetTemperature"] == 65.0
+        assert sent["payload"]["timer"] == 7200
+
+    @pytest.mark.asyncio
+    async def test_set_timer_uses_default_temp_when_no_state(self) -> None:
+        client = AnovaSousVideClient()
+        mock_ws = AsyncMock()
+        client._ws = mock_ws
+        client._connected = True
+
+        await client.set_timer("cooker-123", "a7", 3600)
+
+        sent = json.loads(mock_ws.send.call_args[0][0])
+        assert sent["payload"]["targetTemperature"] == 55.0
+        assert sent["payload"]["timer"] == 3600
+
+
+class TestResetTimer:
+    """Tests for reset_timer command."""
+
+    @pytest.mark.asyncio
+    async def test_reset_timer_sends_zero_timer(self) -> None:
+        client = AnovaSousVideClient()
+        mock_ws = AsyncMock()
+        client._ws = mock_ws
+        client._connected = True
+        from client import AnovaDeviceState
+        client._state["cooker-123"] = AnovaDeviceState(
+            is_cooking=True, target_temperature=68.0
+        )
+
+        await client.reset_timer("cooker-123", "a7")
+
+        mock_ws.send.assert_called_once()
+        sent = json.loads(mock_ws.send.call_args[0][0])
+        assert sent["command"] == "CMD_APC_START"
+        assert sent["payload"]["targetTemperature"] == 68.0
+        assert sent["payload"]["timer"] == 0
+
+    @pytest.mark.asyncio
+    async def test_reset_timer_raises_when_not_connected(self) -> None:
+        client = AnovaSousVideClient()
+        with pytest.raises(ConnectionError):
+            await client.reset_timer("cooker-123", "a7")
