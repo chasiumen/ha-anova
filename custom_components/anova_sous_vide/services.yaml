@@ -1,0 +1,21 @@
+start_cook:
+  fields:
+    temperature:
+      required: true
+      example: 55.0
+      selector:
+        number:
+          min: 25
+          max: 95
+          step: 0.5
+          unit_of_measurement: "°C"
+          mode: "box"
+    timer:
+      default: 0
+      example: 3600
+      selector:
+        number:
+          min: 0
+          max: 259200
+          unit_of_measurement: "seconds"
+          mode: "box"
