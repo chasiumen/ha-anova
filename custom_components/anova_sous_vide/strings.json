@@ -96,6 +96,11 @@
           "F": "Fahrenheit"
         }
       }
+    },
+    "number": {
+      "cook_timer": {
+        "name": "Cook timer"
+      }
     }
   }
 }

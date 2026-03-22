@@ -10,9 +10,10 @@ from homeassistant.components.water_heater import (
 )
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import MAX_TEMP_C, MIN_TEMP_C
+from .const import DOMAIN, MAX_TEMP_C, MIN_TEMP_C
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator
 from .entity import AnovaSousVideEntity
 
@@ -85,12 +86,24 @@ class AnovaSousVideWaterHeater(AnovaSousVideEntity, WaterHeaterEntity):
                 temperature,
             )
 
+    def _get_timer_seconds(self) -> int:
+        """Read timer value from the cook timer number entity."""
+        timer_unique_id = f"{self.coordinator.cooker_id}_cook_timer"
+        registry = er.async_get(self.hass)
+        entity_id = registry.async_get_entity_id("number", DOMAIN, timer_unique_id)
+        if entity_id:
+            state = self.hass.states.get(entity_id)
+            if state and state.state not in ("unknown", "unavailable"):
+                return int(float(state.state) * 3600)
+        return 0
+
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the cooker (start cooking)."""
         await self.coordinator.client.start_cook(
             self.coordinator.cooker_id,
             self.coordinator.device_type,
             self._target_temp,
+            self._get_timer_seconds(),
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
