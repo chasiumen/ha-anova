@@ -21,3 +21,17 @@ start_cook:
           mode: "box"
 
 stop_cook:
+
+set_timer:
+  fields:
+    timer:
+      required: true
+      example: 3600
+      selector:
+        number:
+          min: 0
+          max: 259200
+          unit_of_measurement: "seconds"
+          mode: "box"
+
+reset_timer:

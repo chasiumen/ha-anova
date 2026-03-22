@@ -17,6 +17,20 @@
     "stop_cook": {
       "name": "Stop cook",
       "description": "Stop cooking and turn off the cooker."
+    },
+    "set_timer": {
+      "name": "Set timer",
+      "description": "Set the cook timer in seconds while keeping the cooker running at the current target temperature.",
+      "fields": {
+        "timer": {
+          "name": "Timer",
+          "description": "Cook timer in seconds."
+        }
+      }
+    },
+    "reset_timer": {
+      "name": "Reset timer",
+      "description": "Reset the cook timer to zero while keeping the cooker running at the current target temperature."
     }
   },
   "config": {
