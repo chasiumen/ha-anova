@@ -34,6 +34,11 @@
       "temperature_unit": {
         "default": "mdi:thermometer-lines"
       }
+    },
+    "number": {
+      "cook_timer": {
+        "default": "mdi:timer-outline"
+      }
     }
   }
 }

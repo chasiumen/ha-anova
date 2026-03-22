@@ -15,7 +15,7 @@ from .client import AnovaSousVideClient
 from .const import CONF_COOKER_ID, CONF_DEVICE_TYPE, CONF_PAT, DOMAIN, MAX_TEMP_C, MIN_TEMP_C
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator, AnovaSousVideData
 
-PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR]
+PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR, Platform.NUMBER]
 
 SERVICE_START_COOK = "start_cook"
 ATTR_TEMPERATURE = "temperature"
