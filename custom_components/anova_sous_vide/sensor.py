@@ -164,29 +164,37 @@ class AnovaCookTimeRemainingSensor(AnovaSousVideDescriptionEntity, SensorEntity)
             key="cook_time_remaining",
             name="Cook time remaining",
             translation_key="cook_time_remaining",
-            native_unit_of_measurement=UnitOfTime.SECONDS,
-            device_class=SensorDeviceClass.DURATION,
+            icon="mdi:timer-outline",
             value_fn=lambda data: None,
         )
         super().__init__(coordinator, description)
 
     @property
     def native_value(self) -> StateType:
-        """Calculate remaining time on every read."""
+        """Calculate remaining time on every read, formatted as H:MM:SS."""
         if self.coordinator.data is None:
             return None
         data = self.coordinator.data
         if data.timer_mode == "completed":
-            return 0
+            return "0:00:00"
         if data.timer_mode == "running" and data.cook_time and data.timer_started_at:
             try:
                 started = datetime.fromisoformat(
                     data.timer_started_at.replace("Z", "+00:00")
                 )
                 elapsed = (datetime.now(timezone.utc) - started).total_seconds()
-                return max(0, int(data.cook_time - elapsed))
+                remaining = max(0, int(data.cook_time - elapsed))
+                return self._format_duration(remaining)
             except (ValueError, TypeError):
                 return None
         if data.timer_mode == "idle" and data.cook_time:
-            return data.cook_time
+            return self._format_duration(data.cook_time)
         return None
+
+    @staticmethod
+    def _format_duration(seconds: int) -> str:
+        """Format seconds as H:MM:SS."""
+        h = seconds // 3600
+        m = (seconds % 3600) // 60
+        s = seconds % 60
+        return f"{h}:{m:02d}:{s:02d}"
