@@ -13,6 +13,10 @@
           "description": "Cook timer in seconds. 0 means no timer."
         }
       }
+    },
+    "stop_cook": {
+      "name": "Stop cook",
+      "description": "Stop cooking and turn off the cooker."
     }
   },
   "config": {
