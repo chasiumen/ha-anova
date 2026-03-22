@@ -4,15 +4,33 @@ from __future__ import annotations
 
 import logging
 
+import voluptuous as vol
+
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 
 from .client import AnovaSousVideClient
-from .const import CONF_COOKER_ID, CONF_DEVICE_TYPE, CONF_PAT
+from .const import CONF_COOKER_ID, CONF_DEVICE_TYPE, CONF_PAT, DOMAIN, MAX_TEMP_C, MIN_TEMP_C
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator, AnovaSousVideData
 
 PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR]
+
+SERVICE_START_COOK = "start_cook"
+ATTR_TEMPERATURE = "temperature"
+ATTR_TIMER = "timer"
+
+SERVICE_START_COOK_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_TEMPERATURE): vol.All(
+            vol.Coerce(float), vol.Range(min=MIN_TEMP_C, max=MAX_TEMP_C)
+        ),
+        vol.Optional(ATTR_TIMER, default=0): vol.All(
+            vol.Coerce(int), vol.Range(min=0)
+        ),
+    }
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +62,25 @@ async def async_setup_entry(
     await client.start_listening()
 
     entry.runtime_data = AnovaSousVideData(client=client, coordinator=coordinator)
+
+    async def handle_start_cook(call: ServiceCall) -> None:
+        """Handle the start_cook service call."""
+        temperature = call.data[ATTR_TEMPERATURE]
+        timer = call.data[ATTR_TIMER]
+        await coordinator.client.start_cook(
+            coordinator.cooker_id,
+            coordinator.device_type,
+            temperature,
+            timer,
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_START_COOK,
+        handle_start_cook,
+        schema=SERVICE_START_COOK_SCHEMA,
+    )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -52,6 +89,7 @@ async def async_unload_entry(
     hass: HomeAssistant, entry: AnovaSousVideConfigEntry
 ) -> bool:
     """Unload a config entry."""
+    hass.services.async_remove(DOMAIN, SERVICE_START_COOK)
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.client.disconnect()
     return unload_ok

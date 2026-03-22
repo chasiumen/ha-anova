@@ -1,4 +1,20 @@
 {
+  "services": {
+    "start_cook": {
+      "name": "Start cook",
+      "description": "Start cooking at a target temperature with an optional timer.",
+      "fields": {
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature in Celsius (25-95)."
+        },
+        "timer": {
+          "name": "Timer",
+          "description": "Cook timer in seconds. 0 means no timer."
+        }
+      }
+    }
+  },
   "config": {
     "error": {
       "invalid_token_format": "Token must start with 'anova-'",
