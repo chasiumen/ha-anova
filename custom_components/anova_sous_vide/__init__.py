@@ -18,6 +18,7 @@ from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator, Ano
 PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR, Platform.NUMBER]
 
 SERVICE_START_COOK = "start_cook"
+SERVICE_STOP_COOK = "stop_cook"
 ATTR_TEMPERATURE = "temperature"
 ATTR_TIMER = "timer"
 
@@ -74,11 +75,23 @@ async def async_setup_entry(
             timer,
         )
 
+    async def handle_stop_cook(call: ServiceCall) -> None:
+        """Handle the stop_cook service call."""
+        await coordinator.client.stop_cook(
+            coordinator.cooker_id,
+            coordinator.device_type,
+        )
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_START_COOK,
         handle_start_cook,
         schema=SERVICE_START_COOK_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_STOP_COOK,
+        handle_stop_cook,
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -90,6 +103,7 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
     hass.services.async_remove(DOMAIN, SERVICE_START_COOK)
+    hass.services.async_remove(DOMAIN, SERVICE_STOP_COOK)
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.client.disconnect()
     return unload_ok

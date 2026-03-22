@@ -19,3 +19,5 @@ start_cook:
           max: 259200
           unit_of_measurement: "seconds"
           mode: "box"
+
+stop_cook:

@@ -54,6 +54,7 @@ You need a PAT from the Anova app before setting up this integration.
 | `sensor.*_online` | Sensor | Device online status (diagnostic) |
 | `sensor.*_firmware_version` | Sensor | Firmware version (diagnostic) |
 | `sensor.*_temperature_unit` | Sensor | Device temperature unit setting (diagnostic) |
+| `number.*_cook_timer` | Number | Cook timer slider (0–72 hours) — used by water heater on turn on |
 
 ## Services
 
@@ -73,48 +74,61 @@ data:
   timer: 3600
 ```
 
-## Recipe Example: Brisket (24hrs — 68C/8hrs then 75C/16hrs)
+### `anova_sous_vide.stop_cook`
+
+Stop cooking and turn off the cooker.
+
+```yaml
+action: anova_sous_vide.stop_cook
+```
+
+## Recipe Examples
+
+### Simple: Steak (55C for 2 hours)
 
 ```yaml
 actions:
-  - variables:
-      stage1_temp: 68
-      stage1_timer: 28800
-      stage2_temp: 75
-      stage2_timer: 57600
-      timeout_seconds: 7200
   - action: anova_sous_vide.start_cook
     data:
-      temperature: "{{ stage1_temp }}"
-      timer: "{{ stage1_timer }}"
-  - wait_template: >-
-      {{ (states('sensor.anova_precision_cooker_3_0_water_temperature') | float(0) - stage1_temp) | abs <= 1 }}
-    timeout:
-      seconds: "{{ timeout_seconds }}"
-    continue_on_timeout: true
+      temperature: 55
+      timer: 7200
+  - wait_template: "{{ states('sensor.anova_precision_cooker_3_0_timer_mode') == 'completed' }}"
   - action: notify.persistent_notification
     data:
-      message: "Stage 1: Water at {{ stage1_temp }}C — cooking for 8 hours."
-  - delay:
-      seconds: "{{ stage1_timer }}"
+      message: "Steak is done!"
+```
+
+### Multi-stage: Brisket (68C/8hrs then 75C/16hrs)
+
+```yaml
+actions:
   - action: anova_sous_vide.start_cook
     data:
-      temperature: "{{ stage2_temp }}"
-      timer: "{{ stage2_timer }}"
-  - wait_template: >-
-      {{ (states('sensor.anova_precision_cooker_3_0_water_temperature') | float(0) - stage2_temp) | abs <= 1 }}
-    timeout:
-      seconds: "{{ timeout_seconds }}"
-    continue_on_timeout: true
+      temperature: 68
+      timer: 28800
   - action: notify.persistent_notification
     data:
-      message: "Stage 2: Water at {{ stage2_temp }}C — cooking for 16 hours."
-  - delay:
-      seconds: "{{ stage2_timer }}"
+      message: "Stage 1: Cooking at 68C for 8 hours."
+  - wait_template: "{{ states('sensor.anova_precision_cooker_3_0_timer_mode') == 'completed' }}"
+  - action: anova_sous_vide.start_cook
+    data:
+      temperature: 75
+      timer: 57600
+  - action: notify.persistent_notification
+    data:
+      message: "Stage 2: Cooking at 75C for 16 hours."
+  - wait_template: "{{ states('sensor.anova_precision_cooker_3_0_timer_mode') == 'completed' }}"
   - action: notify.persistent_notification
     data:
       message: "Brisket is done! 24-hour cook complete."
 ```
+
+### Recipe tips
+
+- **No timer helpers needed** — the `cook_time_remaining` sensor automatically counts down on your dashboard when a timer is active
+- The device waits until water reaches target temperature before starting the timer countdown
+- The device keeps cooking after the timer completes (does not auto-stop) — use `anova_sous_vide.stop_cook` if you want to stop after the final stage
+- The `timer_mode` sensor transitions: `idle` → `running` → `completed`
 
 ## Development
 
