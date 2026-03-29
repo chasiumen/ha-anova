@@ -15,12 +15,14 @@ from .client import AnovaSousVideClient
 from .const import CONF_COOKER_ID, CONF_DEVICE_TYPE, CONF_PAT, DOMAIN, MAX_TEMP_C, MIN_TEMP_C
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator, AnovaSousVideData
 
-PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR, Platform.NUMBER]
+PLATFORMS = [Platform.WATER_HEATER, Platform.SENSOR, Platform.NUMBER, Platform.SELECT]
 
 SERVICE_START_COOK = "start_cook"
 SERVICE_STOP_COOK = "stop_cook"
 SERVICE_RESET_TIMER = "reset_timer"
 SERVICE_SET_TIMER = "set_timer"
+SERVICE_START_SELECTED = "start_selected_recipe"
+SERVICE_CANCEL_SELECTED = "cancel_selected_recipe"
 ATTR_TEMPERATURE = "temperature"
 ATTR_TIMER = "timer"
 
@@ -131,6 +133,44 @@ async def async_setup_entry(
         handle_reset_timer,
     )
 
+    async def _get_selected_automation_id() -> str | None:
+        """Return the automation entity_id for the currently selected recipe."""
+        select_entity = coordinator.recipe_select
+        if select_entity:
+            return select_entity.selected_automation_id
+        return None
+
+    async def handle_start_selected(call: ServiceCall) -> None:
+        """Trigger the currently selected recipe automation."""
+        automation_id = await _get_selected_automation_id()
+        if automation_id:
+            await hass.services.async_call(
+                "automation", "trigger",
+                {"entity_id": automation_id},
+                blocking=True,
+            )
+
+    async def handle_cancel_selected(call: ServiceCall) -> None:
+        """Cancel the currently selected recipe automation."""
+        automation_id = await _get_selected_automation_id()
+        if automation_id:
+            await hass.services.async_call(
+                "automation", "turn_off",
+                {"entity_id": automation_id, "stop_actions": True},
+                blocking=True,
+            )
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_START_SELECTED,
+        handle_start_selected,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_CANCEL_SELECTED,
+        handle_cancel_selected,
+    )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -143,6 +183,8 @@ async def async_unload_entry(
     hass.services.async_remove(DOMAIN, SERVICE_STOP_COOK)
     hass.services.async_remove(DOMAIN, SERVICE_SET_TIMER)
     hass.services.async_remove(DOMAIN, SERVICE_RESET_TIMER)
+    hass.services.async_remove(DOMAIN, SERVICE_START_SELECTED)
+    hass.services.async_remove(DOMAIN, SERVICE_CANCEL_SELECTED)
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.client.disconnect()
     return unload_ok
