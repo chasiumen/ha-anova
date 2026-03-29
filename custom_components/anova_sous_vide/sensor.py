@@ -97,7 +97,13 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         name="Cook started",
         translation_key="cook_started",
         device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda data: data.cook_started_timestamp,
+        value_fn=lambda data: (
+            datetime.fromisoformat(
+                data.cook_started_timestamp.replace("Z", "+00:00")
+            )
+            if data.cook_started_timestamp
+            else None
+        ),
     ),
     AnovaSousVideSensorDescription(
         key="online",
@@ -171,24 +177,13 @@ class AnovaCookTimeRemainingSensor(AnovaSousVideDescriptionEntity, SensorEntity)
 
     @property
     def native_value(self) -> StateType:
-        """Calculate remaining time on every read, formatted as H:MM:SS."""
+        """Return remaining cook time formatted as H:MM:SS."""
         if self.coordinator.data is None:
             return None
         data = self.coordinator.data
-        if data.timer_mode == "completed":
-            return "0:00:00"
-        if data.timer_mode == "running" and data.cook_time and data.timer_started_at:
-            try:
-                started = datetime.fromisoformat(
-                    data.timer_started_at.replace("Z", "+00:00")
-                )
-                elapsed = (datetime.now(timezone.utc) - started).total_seconds()
-                remaining = max(0, int(data.cook_time - elapsed))
-                return self._format_duration(remaining)
-            except (ValueError, TypeError):
-                return None
-        if data.timer_mode == "idle" and data.cook_time:
-            return self._format_duration(data.cook_time)
+        remaining = data.cook_time_remaining
+        if remaining is not None:
+            return self._format_duration(remaining)
         return None
 
     @staticmethod
