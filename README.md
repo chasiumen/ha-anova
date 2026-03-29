@@ -55,6 +55,7 @@ You need a PAT from the Anova app before setting up this integration.
 | `sensor.*_firmware_version` | Sensor | Firmware version (diagnostic) |
 | `sensor.*_temperature_unit` | Sensor | Device temperature unit setting (diagnostic) |
 | `number.*_cook_timer` | Number | Cook timer slider (0–72 hours) — used by water heater on turn on |
+| `select.*_recipe_selector` | Select | Recipe dropdown — auto-discovers automations labeled `sous_vide` |
 
 ## Services
 
@@ -102,6 +103,60 @@ Reset the cook timer to zero while keeping the cooker running at the current tar
 
 ```yaml
 action: anova_sous_vide.reset_timer
+```
+
+### `anova_sous_vide.start_selected_recipe`
+
+Trigger the recipe automation currently selected in the recipe selector.
+
+```yaml
+action: anova_sous_vide.start_selected_recipe
+```
+
+### `anova_sous_vide.cancel_selected_recipe`
+
+Cancel the recipe automation currently selected in the recipe selector.
+
+```yaml
+action: anova_sous_vide.cancel_selected_recipe
+```
+
+## Recipe Selector
+
+The integration includes a **recipe selector** dropdown that auto-discovers your recipe automations. Instead of creating a separate dashboard card for each recipe, use one compact card with a dropdown.
+
+### Setup
+
+1. Create a label `sous_vide` in HA: **Settings → Labels → + Create Label**, name it `sous_vide`
+2. Add the label to each recipe automation: open the automation → **Labels** → add `sous_vide`
+3. The `select.*_recipe_selector` entity auto-populates with your labeled automations
+
+### Dashboard card
+
+```yaml
+type: entities
+title: Sous Vide Recipe
+entities:
+  - entity: select.anova_precision_cooker_3_0_recipe_selector
+    name: Recipe
+  - entity: sensor.anova_precision_cooker_3_0_target_temperature
+    name: Current Stage Temp
+  - entity: sensor.anova_precision_cooker_duration
+    name: Time Remaining
+  - entity: sensor.anova_precision_cooker_3_0_timer_mode
+    name: Timer Status
+  - type: button
+    name: Start
+    icon: mdi:play
+    tap_action:
+      action: perform-action
+      perform_action: anova_sous_vide.start_selected_recipe
+  - type: button
+    name: Cancel
+    icon: mdi:cancel
+    tap_action:
+      action: perform-action
+      perform_action: anova_sous_vide.cancel_selected_recipe
 ```
 
 ## Recipe Examples

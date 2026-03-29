@@ -58,6 +58,8 @@ class AnovaSousVideCoordinator(DataUpdateCoordinator[AnovaDeviceState]):
             model="Precision Cooker 3.0",
         )
 
+        self.recipe_select = None  # Set by AnovaRecipeSelect on init
+
         # Register for state updates from the client
         self._remove_callback = client.add_state_callback(self._on_state_update)
 

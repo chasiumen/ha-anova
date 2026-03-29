@@ -39,6 +39,11 @@
       "cook_timer": {
         "default": "mdi:timer-outline"
       }
+    },
+    "select": {
+      "recipe_selector": {
+        "default": "mdi:book-open-variant"
+      }
     }
   }
 }

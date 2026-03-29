@@ -31,6 +31,14 @@
     "reset_timer": {
       "name": "Reset timer",
       "description": "Reset the cook timer to zero while keeping the cooker running at the current target temperature."
+    },
+    "start_selected_recipe": {
+      "name": "Start selected recipe",
+      "description": "Trigger the recipe automation currently selected in the recipe selector."
+    },
+    "cancel_selected_recipe": {
+      "name": "Cancel selected recipe",
+      "description": "Cancel the recipe automation currently selected in the recipe selector."
     }
   },
   "config": {
@@ -118,6 +126,11 @@
     "number": {
       "cook_timer": {
         "name": "Cook timer"
+      }
+    },
+    "select": {
+      "recipe_selector": {
+        "name": "Recipe selector"
       }
     }
   }
