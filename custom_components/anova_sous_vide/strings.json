@@ -109,6 +109,9 @@
       "cook_started": {
         "name": "Cook started"
       },
+      "active_recipe": {
+        "name": "Active recipe"
+      },
       "online": {
         "name": "Online"
       },

@@ -50,6 +50,7 @@ You need a PAT from the Anova app before setting up this integration.
 | `sensor.*_timer_mode` | Sensor | Timer state (idle, running, completed) |
 | `sensor.*_mode` | Sensor | Device mode (idle, cook, low water, etc.) |
 | `sensor.*_cook_stage` | Sensor | Cook stage status (running, waiting) |
+| `sensor.*_active_recipe` | Sensor | Currently running recipe automation name (or empty) |
 | `sensor.*_cook_started` | Sensor | Timestamp when cook started |
 | `sensor.*_online` | Sensor | Device online status (diagnostic) |
 | `sensor.*_firmware_version` | Sensor | Firmware version (diagnostic) |
