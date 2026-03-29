@@ -13,13 +13,14 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import EntityCategory, UnitOfTemperature, UnitOfTime
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.typing import StateType
 
 from .client import AnovaDeviceState
 from .coordinator import AnovaSousVideConfigEntry, AnovaSousVideCoordinator
-from .entity import AnovaSousVideDescriptionEntity
+from .entity import AnovaSousVideDescriptionEntity, AnovaSousVideEntity
 
 ANOVA_MODES = [
     "cook",
@@ -143,6 +144,7 @@ async def async_setup_entry(
         for description in SENSOR_DESCRIPTIONS
     ]
     entities.append(AnovaCookTimeRemainingSensor(coordinator))
+    entities.append(AnovaActiveRecipeSensor(coordinator))
     async_add_entities(entities)
 
 
@@ -193,3 +195,65 @@ class AnovaCookTimeRemainingSensor(AnovaSousVideDescriptionEntity, SensorEntity)
         m = (seconds % 3600) // 60
         s = seconds % 60
         return f"{h}:{m:02d}:{s:02d}"
+
+
+class AnovaActiveRecipeSensor(AnovaSousVideEntity, SensorEntity):
+    """Sensor that reports which recipe automation is currently running."""
+
+    _attr_translation_key = "active_recipe"
+    _attr_icon = "mdi:chef-hat"
+
+    def __init__(self, coordinator: AnovaSousVideCoordinator) -> None:
+        """Initialize the active recipe sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.cooker_id}_active_recipe"
+        self._unsub_track: list = []
+        coordinator.active_recipe_sensor = self
+
+    async def async_added_to_hass(self) -> None:
+        """Start tracking automation state changes."""
+        await super().async_added_to_hass()
+        self._update_tracked_automations()
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Clean up state listeners."""
+        for unsub in self._unsub_track:
+            unsub()
+        self._unsub_track.clear()
+
+    @callback
+    def _update_tracked_automations(self) -> None:
+        """Re-subscribe to state changes for all recipe automations."""
+        for unsub in self._unsub_track:
+            unsub()
+        self._unsub_track.clear()
+
+        select_entity = self.coordinator.recipe_select
+        if not select_entity:
+            return
+
+        entity_ids = list(select_entity._recipe_map.values())
+        if entity_ids:
+            self._unsub_track.append(
+                async_track_state_change_event(
+                    self.hass, entity_ids, self._on_automation_state_change
+                )
+            )
+
+    @callback
+    def _on_automation_state_change(self, event: Event) -> None:
+        """Handle automation state changes."""
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the name of the currently active recipe, or None."""
+        select_entity = self.coordinator.recipe_select
+        if not select_entity:
+            return None
+
+        for name, entity_id in select_entity._recipe_map.items():
+            state = self.hass.states.get(entity_id)
+            if state and state.attributes.get("current", 0) > 0:
+                return name
+        return None

@@ -25,6 +25,9 @@
       "cook_started": {
         "default": "mdi:clock-start"
       },
+      "active_recipe": {
+        "default": "mdi:chef-hat"
+      },
       "online": {
         "default": "mdi:wifi"
       },

@@ -59,6 +59,7 @@ class AnovaSousVideCoordinator(DataUpdateCoordinator[AnovaDeviceState]):
         )
 
         self.recipe_select = None  # Set by AnovaRecipeSelect on init
+        self.active_recipe_sensor = None  # Set by AnovaActiveRecipeSensor on init
 
         # Register for state updates from the client
         self._remove_callback = client.add_state_callback(self._on_state_update)
