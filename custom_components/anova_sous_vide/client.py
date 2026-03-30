@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import ssl
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -103,7 +104,10 @@ class AnovaSousVideClient:
     async def _connect(self) -> None:
         """Establish the WebSocket connection."""
         uri = f"{WS_URL}?token={self._pat}&supportedAccessories={SUPPORTED_ACCESSORIES}"
-        self._ws = await websockets.connect(uri)
+        ssl_context = await asyncio.get_event_loop().run_in_executor(
+            None, ssl.create_default_context
+        )
+        self._ws = await websockets.connect(uri, ssl=ssl_context)
         self._connected = True
         _LOGGER.debug("Connected to Anova WebSocket")
 
