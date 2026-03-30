@@ -102,6 +102,7 @@
       "active_stage_mode": {
         "name": "Cook stage",
         "state": {
+          "entering": "Entering",
           "running": "Running",
           "waiting": "Waiting"
         }
