@@ -46,6 +46,8 @@ class AnovaRecipeSelect(AnovaSousVideEntity, SelectEntity):
         """Register for entity registry updates when added to HA."""
         await super().async_added_to_hass()
         self._update_recipe_list()
+        if self.coordinator.active_recipe_sensor:
+            self.coordinator.active_recipe_sensor.async_write_ha_state()
         self.async_on_remove(
             self.hass.bus.async_listen(
                 er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
