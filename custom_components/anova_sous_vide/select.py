@@ -58,7 +58,6 @@ class AnovaRecipeSelect(AnovaSousVideEntity, SelectEntity):
         self._update_recipe_list()
         self.async_write_ha_state()
         if self.coordinator.active_recipe_sensor:
-            self.coordinator.active_recipe_sensor._update_tracked_automations()
             self.coordinator.active_recipe_sensor.async_write_ha_state()
 
     @callback

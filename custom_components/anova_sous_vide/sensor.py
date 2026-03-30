@@ -15,7 +15,6 @@ from homeassistant.components.sensor import (
 from homeassistant.const import EntityCategory, UnitOfTemperature, UnitOfTime
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.typing import StateType
 
 from .client import AnovaDeviceState
@@ -90,7 +89,7 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         name="Cook stage",
         translation_key="active_stage_mode",
         device_class=SensorDeviceClass.ENUM,
-        options=["running", "waiting"],
+        options=["entering", "running", "waiting"],
         value_fn=lambda data: data.active_stage_mode,
     ),
     AnovaSousVideSensorDescription(
@@ -207,43 +206,28 @@ class AnovaActiveRecipeSensor(AnovaSousVideEntity, SensorEntity):
         """Initialize the active recipe sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.cooker_id}_active_recipe"
-        self._unsub_track: list = []
         coordinator.active_recipe_sensor = self
 
     async def async_added_to_hass(self) -> None:
         """Start tracking automation state changes."""
         await super().async_added_to_hass()
-        self._update_tracked_automations()
-
-    async def async_will_remove_from_hass(self) -> None:
-        """Clean up state listeners."""
-        for unsub in self._unsub_track:
-            unsub()
-        self._unsub_track.clear()
-
-    @callback
-    def _update_tracked_automations(self) -> None:
-        """Re-subscribe to state changes for all recipe automations."""
-        for unsub in self._unsub_track:
-            unsub()
-        self._unsub_track.clear()
-
-        select_entity = self.coordinator.recipe_select
-        if not select_entity:
-            return
-
-        entity_ids = list(select_entity._recipe_map.values())
-        if entity_ids:
-            self._unsub_track.append(
-                async_track_state_change_event(
-                    self.hass, entity_ids, self._on_automation_state_change
-                )
+        # Select entity may not be loaded yet — listen for all automation
+        # state changes and filter in the handler
+        self.async_on_remove(
+            self.hass.bus.async_listen(
+                "state_changed", self._on_state_changed
             )
+        )
 
     @callback
-    def _on_automation_state_change(self, event: Event) -> None:
-        """Handle automation state changes."""
-        self.async_write_ha_state()
+    def _on_state_changed(self, event: Event) -> None:
+        """Handle state changes — update if it's a tracked automation."""
+        entity_id = event.data.get("entity_id", "")
+        if not entity_id.startswith("automation."):
+            return
+        select_entity = self.coordinator.recipe_select
+        if select_entity and entity_id in select_entity._recipe_map.values():
+            self.async_write_ha_state()
 
     @property
     def native_value(self) -> str | None:
