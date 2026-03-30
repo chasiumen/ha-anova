@@ -38,6 +38,18 @@ class AnovaTimerNumber(AnovaSousVideEntity, NumberEntity):
         self._attr_native_value = 0
 
     async def async_set_native_value(self, value: float) -> None:
-        """Set the timer value."""
+        """Set the timer value. If cooking, apply immediately via set_timer."""
         self._attr_native_value = value
         self.async_write_ha_state()
+
+        # If the cooker is currently cooking, apply the timer immediately
+        if (
+            self.coordinator.data is not None
+            and self.coordinator.data.mode == "cook"
+        ):
+            timer_seconds = int(value * 3600)
+            await self.coordinator.client.set_timer(
+                self.coordinator.cooker_id,
+                self.coordinator.device_type,
+                timer_seconds,
+            )
