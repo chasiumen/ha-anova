@@ -216,14 +216,9 @@ class AnovaTimeAtTemperatureSensor(AnovaSousVideDescriptionEntity, SensorEntity)
     @property
     def native_value(self) -> StateType:
         """Return elapsed time at target temperature formatted as H:MM:SS."""
-        if self.coordinator.data is None:
+        started = self.coordinator.time_at_temp_start
+        if started is None:
             return None
-        data = self.coordinator.data
-        if not data.timer_started_at:
-            return None
-        started = datetime.fromisoformat(
-            data.timer_started_at.replace("Z", "+00:00")
-        )
         elapsed = int((datetime.now(timezone.utc) - started).total_seconds())
         if elapsed < 0:
             return None
