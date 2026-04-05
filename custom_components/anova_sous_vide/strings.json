@@ -110,8 +110,8 @@
       "cook_started": {
         "name": "Cook started"
       },
-      "timer_started": {
-        "name": "Timer started"
+      "time_at_temperature": {
+        "name": "Time at temperature"
       },
       "active_recipe": {
         "name": "Active recipe"

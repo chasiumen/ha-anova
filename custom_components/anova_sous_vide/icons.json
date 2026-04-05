@@ -25,7 +25,7 @@
       "cook_started": {
         "default": "mdi:clock-start"
       },
-      "timer_started": {
+      "time_at_temperature": {
         "default": "mdi:timer-check"
       },
       "active_recipe": {
