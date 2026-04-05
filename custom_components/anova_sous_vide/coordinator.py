@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -60,6 +61,8 @@ class AnovaSousVideCoordinator(DataUpdateCoordinator[AnovaDeviceState]):
 
         self.recipe_select = None  # Set by AnovaRecipeSelect on init
         self.active_recipe_sensor = None  # Set by AnovaActiveRecipeSensor on init
+        self.time_at_temp_start: datetime | None = None
+        self._prev_stage_mode: str | None = None
 
         # Register for state updates from the client
         self._remove_callback = client.add_state_callback(self._on_state_update)
@@ -67,4 +70,25 @@ class AnovaSousVideCoordinator(DataUpdateCoordinator[AnovaDeviceState]):
     def _on_state_update(self, cooker_id: str, state: AnovaDeviceState) -> None:
         """Handle a state update from the WebSocket client."""
         if cooker_id == self.cooker_id:
+            self._track_time_at_temperature(state)
             self.async_set_updated_data(state)
+
+    def _track_time_at_temperature(self, state: AnovaDeviceState) -> None:
+        """Track when the cooker reaches and stays at target temperature."""
+        stage = state.active_stage_mode
+        mode = state.mode
+
+        if mode != "cook":
+            # Not cooking — reset
+            self.time_at_temp_start = None
+            self._prev_stage_mode = None
+            return
+
+        if stage == "running" and self.time_at_temp_start is None:
+            # Just reached target temperature
+            self.time_at_temp_start = datetime.now(timezone.utc)
+        elif stage != "running":
+            # Lost target temperature (e.g. entering/waiting)
+            self.time_at_temp_start = None
+
+        self._prev_stage_mode = stage
