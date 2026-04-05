@@ -106,19 +106,6 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         ),
     ),
     AnovaSousVideSensorDescription(
-        key="timer_started",
-        name="Timer started",
-        translation_key="timer_started",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda data: (
-            datetime.fromisoformat(
-                data.timer_started_at.replace("Z", "+00:00")
-            )
-            if data.timer_started_at
-            else None
-        ),
-    ),
-    AnovaSousVideSensorDescription(
         key="online",
         name="Online",
         translation_key="online",
@@ -156,6 +143,7 @@ async def async_setup_entry(
         for description in SENSOR_DESCRIPTIONS
     ]
     entities.append(AnovaCookTimeRemainingSensor(coordinator))
+    entities.append(AnovaTimeAtTemperatureSensor(coordinator))
     entities.append(AnovaActiveRecipeSensor(coordinator))
     async_add_entities(entities)
 
@@ -199,6 +187,47 @@ class AnovaCookTimeRemainingSensor(AnovaSousVideDescriptionEntity, SensorEntity)
         if remaining is not None:
             return self._format_duration(remaining)
         return None
+
+    @staticmethod
+    def _format_duration(seconds: int) -> str:
+        """Format seconds as H:MM:SS."""
+        h = seconds // 3600
+        m = (seconds % 3600) // 60
+        s = seconds % 60
+        return f"{h}:{m:02d}:{s:02d}"
+
+
+class AnovaTimeAtTemperatureSensor(AnovaSousVideDescriptionEntity, SensorEntity):
+    """Sensor that counts up from when the target temperature was reached."""
+
+    entity_description: AnovaSousVideSensorDescription
+
+    def __init__(self, coordinator: AnovaSousVideCoordinator) -> None:
+        """Initialize the time at temperature sensor."""
+        description = AnovaSousVideSensorDescription(
+            key="time_at_temperature",
+            name="Time at temperature",
+            translation_key="time_at_temperature",
+            icon="mdi:timer-check",
+            value_fn=lambda data: None,
+        )
+        super().__init__(coordinator, description)
+
+    @property
+    def native_value(self) -> StateType:
+        """Return elapsed time at target temperature formatted as H:MM:SS."""
+        if self.coordinator.data is None:
+            return None
+        data = self.coordinator.data
+        if not data.timer_started_at:
+            return None
+        started = datetime.fromisoformat(
+            data.timer_started_at.replace("Z", "+00:00")
+        )
+        elapsed = int((datetime.now(timezone.utc) - started).total_seconds())
+        if elapsed < 0:
+            return None
+        return self._format_duration(elapsed)
 
     @staticmethod
     def _format_duration(seconds: int) -> str:
