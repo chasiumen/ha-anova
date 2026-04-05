@@ -110,6 +110,9 @@
       "cook_started": {
         "name": "Cook started"
       },
+      "timer_started": {
+        "name": "Timer started"
+      },
       "active_recipe": {
         "name": "Active recipe"
       },
