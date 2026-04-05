@@ -106,6 +106,19 @@ SENSOR_DESCRIPTIONS: list[AnovaSousVideSensorDescription] = [
         ),
     ),
     AnovaSousVideSensorDescription(
+        key="timer_started",
+        name="Timer started",
+        translation_key="timer_started",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda data: (
+            datetime.fromisoformat(
+                data.timer_started_at.replace("Z", "+00:00")
+            )
+            if data.timer_started_at
+            else None
+        ),
+    ),
+    AnovaSousVideSensorDescription(
         key="online",
         name="Online",
         translation_key="online",
